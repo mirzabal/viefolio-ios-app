@@ -16,6 +16,13 @@ struct ProfileView: View {
     @State private var avatarItem: PhotosPickerItem?
     @State private var avatarUploading = false
 
+    enum UsernameStatus { case idle, checking, available, taken, invalid }
+    @State private var usernameDraft = ""
+    @State private var usernameStatus: UsernameStatus = .idle
+    @State private var usernameCheckTask: Task<Void, Never>?
+    @State private var usernameSaving = false
+    @State private var usernameError: String?
+
     private var hasChanges: Bool {
         guard let remote = firestoreService.profile else { return false }
         return profile != remote
@@ -32,6 +39,7 @@ struct ProfileView: View {
                     }
                 }
                 avatarSection
+                usernameSection
                 aboutSection
                 skillsSection
                 socialLinksSection
@@ -55,12 +63,14 @@ struct ProfileView: View {
                 guard let remote else { return }
                 if !loadedFromService || !hasChanges {
                     profile = remote
+                    usernameDraft = remote.username
                     loadedFromService = true
                 }
             }
             .onAppear {
                 if let remote = firestoreService.profile, !loadedFromService {
                     profile = remote
+                    usernameDraft = remote.username
                     loadedFromService = true
                 }
             }
@@ -90,18 +100,94 @@ struct ProfileView: View {
             .onChange(of: avatarItem) { _, newItem in
                 Task { await uploadAvatar(newItem) }
             }
+        }
+    }
 
-            if !profile.username.isEmpty {
-                LabeledContent("Username") {
-                    Text("\(profile.username).viefolio.com")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
+    private var usernameSection: some View {
+        Section {
+            HStack(spacing: 8) {
+                TextField("username", text: $usernameDraft)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .onChange(of: usernameDraft) { _, newValue in
+                        let sanitized = sanitizeUsername(newValue)
+                        if sanitized != newValue { usernameDraft = sanitized }
+                        usernameError = nil
+                        scheduleUsernameCheck(sanitized)
+                    }
+                usernameStatusIcon
+            }
+
+            if usernameSaving {
+                HStack { ProgressView(); Text("Saving…").foregroundStyle(.secondary) }
+            } else if usernameDraft != profile.username && usernameStatus == .available {
+                Button("Change username to \(usernameDraft)") {
+                    Task { await saveUsername() }
                 }
             }
-        } footer: {
-            if !profile.username.isEmpty {
-                Text("Username can be changed on viefolio.com — it requires a domain reservation.")
+
+            if let usernameError {
+                Label(usernameError, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.red)
             }
+        } header: {
+            Text("Username")
+        } footer: {
+            Text(usernameDraft.isEmpty ? "yourname.viefolio.com" : "\(usernameDraft).viefolio.com")
+        }
+    }
+
+    @ViewBuilder
+    private var usernameStatusIcon: some View {
+        switch usernameStatus {
+        case .idle, .invalid: EmptyView()
+        case .checking: ProgressView().controlSize(.small)
+        case .available: Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+        case .taken: Image(systemName: "xmark.circle.fill").foregroundStyle(.red)
+        }
+    }
+
+    private func sanitizeUsername(_ raw: String) -> String {
+        String(raw.lowercased().filter { $0.isLowercase || $0.isNumber || $0 == "-" }.prefix(30))
+    }
+
+    private func scheduleUsernameCheck(_ value: String) {
+        usernameCheckTask?.cancel()
+        if value == profile.username { usernameStatus = .idle; return }
+        guard value.count >= 2 else {
+            usernameStatus = value.isEmpty ? .idle : .invalid
+            return
+        }
+        usernameStatus = .checking
+        usernameCheckTask = Task {
+            try? await Task.sleep(for: .milliseconds(500))
+            guard !Task.isCancelled else { return }
+            let available = await firestoreService.isUsernameAvailable(value)
+            guard !Task.isCancelled else { return }
+            switch available {
+            case .some(true):  usernameStatus = .available
+            case .some(false): usernameStatus = .taken
+            case .none:        usernameStatus = .idle
+            }
+        }
+    }
+
+    private func saveUsername() async {
+        guard usernameDraft != profile.username, !profile.userId.isEmpty else { return }
+        usernameSaving = true
+        usernameError = nil
+        defer { usernameSaving = false }
+        do {
+            try await firestoreService.changeUsername(
+                newUsername: usernameDraft,
+                oldUsername: profile.username,
+                uid: profile.userId
+            )
+            profile.username = usernameDraft
+        } catch {
+            usernameError = (error as? UsernameError)?.errorDescription ?? "Couldn't change username. Try again."
+            usernameStatus = .taken
         }
     }
 

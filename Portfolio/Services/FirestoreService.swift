@@ -290,6 +290,38 @@ final class FirestoreService {
         }
     }
 
+    // Release the old usernames/{old} doc and claim usernames/{new}, then update profile.username — all atomic.
+    func changeUsername(newUsername: String, oldUsername: String, uid: String) async throws {
+        let legacy = try await db.collection("profiles")
+            .whereField("username", isEqualTo: newUsername)
+            .getDocuments()
+        if legacy.documents.contains(where: { $0.documentID != uid }) {
+            throw UsernameError.taken
+        }
+
+        let newRef = db.collection("usernames").document(newUsername)
+        let profileRef = db.collection("profiles").document(uid)
+        let oldRef = oldUsername.isEmpty ? nil : db.collection("usernames").document(oldUsername)
+
+        _ = try await db.runTransaction { transaction, errorPointer in
+            do {
+                let reservation = try transaction.getDocument(newRef)
+                if reservation.exists, reservation.data()?["userId"] as? String != uid {
+                    errorPointer?.pointee = UsernameError.taken as NSError
+                    return nil
+                }
+                transaction.setData(["userId": uid], forDocument: newRef)
+                if let oldRef, oldUsername != newUsername {
+                    transaction.deleteDocument(oldRef)
+                }
+                transaction.setData(["username": newUsername], forDocument: profileRef, merge: true)
+            } catch {
+                errorPointer?.pointee = error as NSError
+            }
+            return nil
+        }
+    }
+
     func claimUsernameAndCreateProfile(username: String, fullName: String, uid: String) async throws {
         let legacy = try await db.collection("profiles")
             .whereField("username", isEqualTo: username)

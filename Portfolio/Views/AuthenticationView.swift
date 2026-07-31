@@ -71,9 +71,9 @@ struct AuthenticationView: View {
     private var card: some View {
         VStack(spacing: 18) {
             SignInWithAppleButton(isRegistering ? .signUp : .signIn) { request in
-                request.requestedScopes = [.fullName, .email]
-            } onCompletion: { _ in
-                Task { try? await authService.signInWithApple() }
+                authService.prepareAppleRequest(request)
+            } onCompletion: { result in
+                Task { try? await authService.completeAppleSignIn(result) }
             }
             .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
             .frame(height: 48)

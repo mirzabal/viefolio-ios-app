@@ -178,37 +178,43 @@ final class AuthenticationService {
     }
     
     // MARK: - Apple Sign In
-    
-    func signInWithApple() async throws {
-        isLoading = true
+
+    // Called from SignInWithAppleButton's request closure — the button presents the sheet itself.
+    func prepareAppleRequest(_ request: ASAuthorizationAppleIDRequest) {
         errorMessage = nil
-        
         let nonce = randomNonceString()
         currentNonce = nonce
-        
-        let appleIDProvider = ASAuthorizationAppleIDProvider()
-        let request = appleIDProvider.createRequest()
         request.requestedScopes = [.fullName, .email]
         request.nonce = sha256(nonce)
-        
+    }
+
+    // Called from the button's onCompletion with the credential it already obtained — no second sheet.
+    func completeAppleSignIn(_ result: Result<ASAuthorization, Error>) async throws {
+        isLoading = true
+        defer { isLoading = false }
+
         do {
-            let result = try await performAppleSignIn(request: request)
-            
-            guard let appleIDCredential = result.credential as? ASAuthorizationAppleIDCredential,
+            let authorization: ASAuthorization
+            switch result {
+            case .success(let auth): authorization = auth
+            case .failure(let error): throw error
+            }
+
+            guard let nonce = currentNonce,
+                  let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
                   let appleIDToken = appleIDCredential.identityToken,
                   let idTokenString = String(data: appleIDToken, encoding: .utf8) else {
-                isLoading = false
                 throw AuthError.invalidCredential
             }
-            
+
             let credential = OAuthProvider.appleCredential(
                 withIDToken: idTokenString,
                 rawNonce: nonce,
                 fullName: appleIDCredential.fullName
             )
-            
+
             let authResult = try await Auth.auth().signIn(with: credential)
-            
+
             let displayName = [
                 appleIDCredential.fullName?.givenName,
                 appleIDCredential.fullName?.familyName
@@ -219,9 +225,7 @@ final class AuthenticationService {
             )
 
             currentUser = authResult.user
-            isLoading = false
         } catch {
-            isLoading = false
             errorMessage = friendlyMessage(for: error)
             throw error
         }
@@ -298,21 +302,7 @@ final class AuthenticationService {
     }
     
     // MARK: - Apple Sign In Helpers
-    
-    @MainActor
-    private func performAppleSignIn(request: ASAuthorizationAppleIDRequest) async throws -> ASAuthorization {
-        try await withCheckedThrowingContinuation { continuation in
-            let controller = ASAuthorizationController(authorizationRequests: [request])
-            let delegate = AppleSignInDelegate(continuation: continuation)
-            controller.delegate = delegate
-            controller.presentationContextProvider = delegate
-            
-            objc_setAssociatedObject(controller, "delegate", delegate, .OBJC_ASSOCIATION_RETAIN)
-            
-            controller.performRequests()
-        }
-    }
-    
+
     private func randomNonceString(length: Int = 32) -> String {
         precondition(length > 0)
         var randomBytes = [UInt8](repeating: 0, count: length)
@@ -328,33 +318,6 @@ final class AuthenticationService {
         let inputData = Data(input.utf8)
         let hashedData = SHA256.hash(data: inputData)
         return hashedData.compactMap { String(format: "%02x", $0) }.joined()
-    }
-}
-
-// MARK: - Apple Sign In Delegate
-
-private class AppleSignInDelegate: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
-    
-    let continuation: CheckedContinuation<ASAuthorization, Error>
-    
-    init(continuation: CheckedContinuation<ASAuthorization, Error>) {
-        self.continuation = continuation
-    }
-    
-    func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
-        continuation.resume(returning: authorization)
-    }
-    
-    func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
-        continuation.resume(throwing: error)
-    }
-    
-    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
-        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let window = scene.windows.first else {
-            return UIWindow()
-        }
-        return window
     }
 }
 
