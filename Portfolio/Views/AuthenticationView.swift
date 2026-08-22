@@ -13,14 +13,13 @@ struct AuthenticationView: View {
     @State private var confirmPassword = ""
     @State private var fullName = ""
     @State private var username = ""
-    @State private var acceptedTerms = false
 
     enum UsernameStatus { case idle, checking, available, taken, invalid }
     @State private var usernameStatus: UsernameStatus = .idle
     @State private var usernameCheckTask: Task<Void, Never>?
 
     private let brandGradient = LinearGradient(
-        colors: [Color(red: 0.39, green: 0.40, blue: 0.95), Color(red: 0.55, green: 0.36, blue: 0.96)],
+        colors: [Color.brand, Color.brandSoft],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
@@ -37,7 +36,7 @@ struct AuthenticationView: View {
             .frame(maxWidth: 480)
             .frame(maxWidth: .infinity)
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color.canvas)
         .scrollDismissesKeyboard(.interactively)
         .animation(.spring(duration: 0.35), value: isRegistering)
     }
@@ -48,6 +47,9 @@ struct AuthenticationView: View {
         VStack(spacing: 14) {
             HStack() {
                 Image("BrandLogo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 36, height: 36)
                 Text("VieFolio")
                     .font(.title.weight(.semibold))
                     .tracking(-0.5)
@@ -92,19 +94,19 @@ struct AuthenticationView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 48)
-                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
-                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color(.separator), lineWidth: 0.5))
+                .background(Color.surface, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.hairline, lineWidth: 0.5))
                 .foregroundStyle(.primary)
             }
             .disabled(authService.isLoading)
 
             HStack(spacing: 12) {
-                Rectangle().fill(Color(.separator)).frame(height: 0.5)
+                Rectangle().fill(Color.hairline).frame(height: 0.5)
                 Text("or continue with email")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize()
-                Rectangle().fill(Color(.separator)).frame(height: 0.5)
+                Rectangle().fill(Color.hairline).frame(height: 0.5)
             }
 
             VStack(spacing: 14) {
@@ -138,7 +140,6 @@ struct AuthenticationView: View {
                     if !confirmPassword.isEmpty && confirmPassword != password {
                         inlineNote("Passwords don't match.", color: .red, icon: "exclamationmark.circle.fill")
                     }
-                    termsRow
                 }
             }
 
@@ -155,17 +156,17 @@ struct AuthenticationView: View {
                 Group {
                     if isRegistering {
                         Text("Already have an account? ").foregroundStyle(.secondary)
-                        + Text("Sign in").bold().foregroundStyle(.indigo)
+                        + Text("Sign in").bold().foregroundStyle(.brand)
                     } else {
                         Text("Don't have an account? ").foregroundStyle(.secondary)
-                        + Text("Create one").bold().foregroundStyle(.indigo)
+                        + Text("Create one").bold().foregroundStyle(.brand)
                     }
                 }
                 .font(.subheadline)
             }
         }
         .padding(24)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20))
+        .background(Color.surface, in: RoundedRectangle(cornerRadius: 20))
         .shadow(color: .black.opacity(0.05), radius: 16, y: 8)
     }
 
@@ -189,7 +190,7 @@ struct AuthenticationView: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
-            .background(Color(.systemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
+            .background(Color.canvas, in: RoundedRectangle(cornerRadius: 12))
 
             HStack(spacing: 4) {
                 Image(systemName: "globe")
@@ -228,29 +229,8 @@ struct AuthenticationView: View {
                 && usernameStatus != .taken
                 && usernameStatus != .checking
                 && confirmPassword == password
-                && acceptedTerms
         }
         return true
-    }
-
-    private var termsRow: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Button {
-                acceptedTerms.toggle()
-            } label: {
-                Image(systemName: acceptedTerms ? "checkmark.square.fill" : "square")
-                    .font(.system(size: 20))
-                    .foregroundStyle(acceptedTerms ? .indigo : .secondary)
-            }
-            .buttonStyle(.plain)
-
-            Text("I agree to VieFolio's [Terms of Service](https://viefolio.com/terms) and [Privacy Policy](https://viefolio.com/privacy).")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .tint(.indigo)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(.top, 2)
     }
 
     private var submitButton: some View {
@@ -290,7 +270,7 @@ struct AuthenticationView: View {
         Text("By continuing, you agree to VieFolio's [Terms of Service](https://viefolio.com/terms) and [Privacy Policy](https://viefolio.com/privacy).")
             .font(.caption2)
             .foregroundStyle(.tertiary)
-            .tint(.indigo)
+            .tint(.brand)
             .multilineTextAlignment(.center)
     }
 
@@ -304,7 +284,7 @@ struct AuthenticationView: View {
             content()
                 .padding(.horizontal, 14)
                 .padding(.vertical, 12)
-                .background(Color(.systemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
+                .background(Color.canvas, in: RoundedRectangle(cornerRadius: 12))
         }
     }
 

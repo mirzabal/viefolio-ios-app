@@ -79,7 +79,7 @@ struct ProjectsListView: View {
                         Label(project.visible ? "Hide" : "Show",
                               systemImage: project.visible ? "eye.slash" : "eye")
                     }
-                    .tint(.indigo)
+                    .tint(.brand)
                 }
             }
             .onMove { source, destination in
@@ -89,6 +89,7 @@ struct ProjectsListView: View {
                 Task { await firestoreService.saveProjectOrder(reordered) }
             }
         }
+        .viefolioBackground()
         .refreshable { await firestoreService.refresh() }
         .navigationDestination(for: String.self) { projectId in
             ProjectDetailView(projectId: projectId)
@@ -105,7 +106,7 @@ struct ProjectsListView: View {
                 showCreateSheet = true
             }
             .buttonStyle(.borderedProminent)
-            .tint(.indigo)
+            .tint(.brand)
         }
     }
 
@@ -122,7 +123,7 @@ struct ProjectsListView: View {
                 }
             }
             .buttonStyle(.borderedProminent)
-            .tint(.indigo)
+            .tint(.brand)
         }
     }
 }

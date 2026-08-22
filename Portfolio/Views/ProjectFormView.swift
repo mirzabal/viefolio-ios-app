@@ -56,8 +56,8 @@ struct ProjectFormView: View {
     @State private var endDate: Date
     @State private var newTech = ""
 
-    @State private var photoItem: PhotosPickerItem?
-    @State private var pickedImageData: Data?
+    @State private var photoItems: [PhotosPickerItem] = []
+    @State private var pickedImageData: [Data] = []
 
     @State private var isGenerating = false
     @State private var isGeneratingPercents = false
@@ -116,6 +116,7 @@ struct ProjectFormView: View {
                 techStackSection
                 checkpointsSection
             }
+            .viefolioBackground()
             .navigationTitle(isCreate ? "New Project" : "Edit Project")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -168,13 +169,13 @@ struct ProjectFormView: View {
                                 .font(.system(size: 16, weight: .semibold))
                                 .frame(width: 42, height: 42)
                                 .background(
-                                    project.icon == icon ? Color.indigo.opacity(0.15) : Color(.systemGray6),
+                                    project.icon == icon ? Color.brand.opacity(0.15) : Color.subtle,
                                     in: RoundedRectangle(cornerRadius: 10)
                                 )
-                                .foregroundStyle(project.icon == icon ? .indigo : .secondary)
+                                .foregroundStyle(project.icon == icon ? .brand : .secondary)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .stroke(project.icon == icon ? Color.indigo : .clear, lineWidth: 1.5)
+                                        .stroke(project.icon == icon ? Color.brand : .clear, lineWidth: 1.5)
                                 )
                         }
                         .buttonStyle(.plain)
@@ -206,46 +207,95 @@ struct ProjectFormView: View {
     }
 
     private var imageSection: some View {
-        Section("Cover Image") {
+        Section("Images") {
             Toggle("Show image on portfolio", isOn: $project.showImage)
 
-            PhotosPicker(selection: $photoItem, matching: .images) {
-                HStack {
-                    Label(
-                        pickedImageData != nil || !project.imageUrl.isEmpty ? "Change Image" : "Choose Image",
-                        systemImage: "photo"
-                    )
-                    Spacer()
-                    imageThumbnail
+            if !project.imageUrls.isEmpty || !pickedImageData.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(project.imageUrls, id: \.self) { url in
+                            thumbnail(remoteURL: url)
+                        }
+                        ForEach(Array(pickedImageData.enumerated()), id: \.offset) { index, data in
+                            thumbnail(pendingData: data, index: index)
+                        }
+                    }
+                    .padding(.vertical, 4)
                 }
             }
-            .onChange(of: photoItem) { _, newItem in
+
+            PhotosPicker(selection: $photoItems, matching: .images) {
+                Label(
+                    project.imageUrls.isEmpty && pickedImageData.isEmpty ? "Choose Images" : "Add Images",
+                    systemImage: "photo.on.rectangle.angled"
+                )
+            }
+            .onChange(of: photoItems) { _, newItems in
+                guard !newItems.isEmpty else { return }
                 Task {
-                    if let data = try? await newItem?.loadTransferable(type: Data.self) {
-                        pickedImageData = StorageService.preparedJPEG(from: data)
+                    var prepared: [Data] = []
+                    for item in newItems {
+                        if let data = try? await item.loadTransferable(type: Data.self),
+                           let jpeg = StorageService.preparedJPEG(from: data) {
+                            prepared.append(jpeg)
+                        }
                     }
+                    pickedImageData.append(contentsOf: prepared)
+                    photoItems = []
                 }
+            }
+
+            if project.imageUrls.count + pickedImageData.count > 1 {
+                Text("The first image is used as the cover.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
     }
 
     @ViewBuilder
-    private var imageThumbnail: some View {
-        if let data = pickedImageData, let uiImage = UIImage(data: data) {
+    private func thumbnail(remoteURL url: String) -> some View {
+        if let parsed = URL(string: url) {
+            AsyncImage(url: parsed) { image in
+                image.resizable().aspectRatio(contentMode: .fill)
+            } placeholder: {
+                Color.subtle
+            }
+            .frame(width: 64, height: 64)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(alignment: .topTrailing) {
+                removeButton { project.imageUrls.removeAll { $0 == url } }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func thumbnail(pendingData data: Data, index: Int) -> some View {
+        if let uiImage = UIImage(data: data) {
             Image(uiImage: uiImage)
                 .resizable()
                 .aspectRatio(contentMode: .fill)
-                .frame(width: 44, height: 44)
+                .frame(width: 64, height: 64)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
-        } else if !project.imageUrl.isEmpty, let url = URL(string: project.imageUrl) {
-            AsyncImage(url: url) { image in
-                image.resizable().aspectRatio(contentMode: .fill)
-            } placeholder: {
-                Color(.systemGray6)
-            }
-            .frame(width: 44, height: 44)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(alignment: .topTrailing) {
+                    removeButton {
+                        guard pickedImageData.indices.contains(index) else { return }
+                        pickedImageData.remove(at: index)
+                    }
+                }
         }
+    }
+
+    private func removeButton(action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: "xmark.circle.fill")
+                .symbolRenderingMode(.palette)
+                .foregroundStyle(.white, .black.opacity(0.55))
+                .font(.system(size: 18))
+        }
+        .buttonStyle(.plain)
+        .padding(2)
+        .accessibilityLabel("Remove image")
     }
 
     private var linksSection: some View {
@@ -443,23 +493,31 @@ struct ProjectFormView: View {
 
         if isCreate {
             if let newId = await firestoreService.createProject(project, userUid: uid) {
-                if let imageData = pickedImageData {
-                    if let url = try? await StorageService.shared.uploadProjectImage(imageData, userUid: uid, projectId: newId) {
-                        await firestoreService.setProjectImageUrl(url, projectId: newId)
-                    }
+                let urls = await uploadPickedImages(userUid: uid, projectId: newId)
+                if !urls.isEmpty {
+                    await firestoreService.setProjectImageUrls(project.imageUrls + urls, projectId: newId)
                 }
                 dismiss()
             }
         } else {
-            if let imageData = pickedImageData {
-                if let url = try? await StorageService.shared.uploadProjectImage(imageData, userUid: uid, projectId: project.id) {
-                    project.imageUrl = url
-                }
-            }
+            let urls = await uploadPickedImages(userUid: uid, projectId: project.id)
+            project.imageUrls.append(contentsOf: urls)
+            project.imageUrl = project.imageUrls.first ?? ""
             if await firestoreService.updateProject(project) {
                 dismiss()
             }
         }
         isSaving = false
+    }
+
+    /// Uploads sequentially so the stored order matches what the user picked.
+    private func uploadPickedImages(userUid: String, projectId: String) async -> [String] {
+        var urls: [String] = []
+        for data in pickedImageData {
+            if let url = try? await StorageService.shared.uploadProjectImage(data, userUid: userUid, projectId: projectId) {
+                urls.append(url)
+            }
+        }
+        return urls
     }
 }

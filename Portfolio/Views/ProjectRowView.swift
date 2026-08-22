@@ -9,9 +9,9 @@ struct ProjectRowView: View {
         HStack(spacing: 12) {
             Image(systemName: project.icon.systemImage)
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(.indigo)
+                .foregroundStyle(.brand)
                 .frame(width: 44, height: 44)
-                .background(Color.indigo.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+                .background(Color.brand.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
@@ -53,7 +53,7 @@ struct ProjectRowView: View {
     private var progressRing: some View {
         ZStack {
             Circle()
-                .stroke(Color(.systemGray5), lineWidth: 4)
+                .stroke(Color.subtle, lineWidth: 4)
             Circle()
                 .trim(from: 0, to: CGFloat(min(project.progress, 100)) / 100)
                 .stroke(project.status.color, style: StrokeStyle(lineWidth: 4, lineCap: .round))

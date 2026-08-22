@@ -8,6 +8,10 @@ struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
+        tabs
+    }
+
+    private var tabs: some View {
         TabView {
             ProjectsListView()
                 .tabItem {
@@ -29,7 +33,7 @@ struct ContentView: View {
                     Label("Settings", systemImage: "gearshape.fill")
                 }
         }
-        .tint(.indigo)
+        .tint(.brand)
         .task(id: authService.currentUser?.uid) {
             if let uid = authService.currentUser?.uid {
                 FirestoreService.shared.startListening(userUid: uid)

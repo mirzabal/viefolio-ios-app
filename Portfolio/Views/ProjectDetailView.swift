@@ -30,9 +30,9 @@ struct ProjectDetailView: View {
                 HStack(spacing: 14) {
                     Image(systemName: project.icon.systemImage)
                         .font(.system(size: 24, weight: .semibold))
-                        .foregroundStyle(.indigo)
+                        .foregroundStyle(.brand)
                         .frame(width: 56, height: 56)
-                        .background(Color.indigo.opacity(0.1), in: RoundedRectangle(cornerRadius: 14))
+                        .background(Color.brand.opacity(0.1), in: RoundedRectangle(cornerRadius: 14))
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(project.title)
@@ -63,20 +63,24 @@ struct ProjectDetailView: View {
                 }
             }
 
-            // MARK: Image
-            if project.showImage, !project.imageUrl.isEmpty, let url = URL(string: project.imageUrl) {
+            // MARK: Images
+            if project.showImage, !project.imageUrls.isEmpty {
                 Section {
-                    AsyncImage(url: url) { image in
-                        image.resizable().scaledToFit()
-                    } placeholder: {
-                        Rectangle()
-                            .fill(Color(.systemGray6))
-                            .overlay(ProgressView())
-                            .frame(height: 180)
+                    ForEach(project.imageUrls, id: \.self) { urlString in
+                        if let url = URL(string: urlString) {
+                            AsyncImage(url: url) { image in
+                                image.resizable().scaledToFit()
+                            } placeholder: {
+                                Rectangle()
+                                    .fill(Color.subtle)
+                                    .overlay(ProgressView())
+                                    .frame(height: 180)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .listRowInsets(EdgeInsets())
+                        }
                     }
-                    .frame(maxWidth: .infinity)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .listRowInsets(EdgeInsets())
                 }
             }
 
@@ -126,7 +130,7 @@ struct ProjectDetailView: View {
                                 HStack {
                                     Image(systemName: link.type.iconName)
                                         .frame(width: 24)
-                                        .foregroundStyle(.indigo)
+                                        .foregroundStyle(.brand)
                                     Text(link.type.displayName)
                                     Spacer()
                                     Image(systemName: "arrow.up.right")
@@ -147,6 +151,7 @@ struct ProjectDetailView: View {
                 }
             }
         }
+        .viefolioBackground()
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Edit") {
@@ -172,8 +177,8 @@ struct FlowChips: View {
                     .font(.caption.weight(.medium))
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
-                    .background(Color.indigo.opacity(0.1), in: Capsule())
-                    .foregroundStyle(.indigo)
+                    .background(Color.brand.opacity(0.1), in: Capsule())
+                    .foregroundStyle(.brand)
                     .lineLimit(1)
             }
         }

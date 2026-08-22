@@ -20,6 +20,10 @@ final class AuthenticationService {
     }
     var isLoading = false
     var errorMessage: String?
+    /// True only for password accounts whose address isn't confirmed yet.
+    var needsEmailVerification = false
+    /// Guards against mailing a second code to someone who just got one.
+    var verificationCodeSent = false
     
     // MARK: - Private
     
@@ -43,7 +47,67 @@ final class AuthenticationService {
     private func setupAuthStateListener() {
         authStateListener = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             self?.currentUser = user
+            // Password sign-ups only — Google and Apple arrive already verified.
+            self?.needsEmailVerification = user.map {
+                !$0.isEmailVerified && $0.providerData.contains { $0.providerID == "password" }
+            } ?? false
         }
+    }
+
+    // MARK: - Email Verification (6-digit code)
+
+    /// Re-checks the server's verification state. The code endpoint flips the
+    /// auth record, so a reload is all it takes to notice.
+    func refreshEmailVerification() async {
+        guard let user = Auth.auth().currentUser,
+              user.providerData.contains(where: { $0.providerID == "password" })
+        else { needsEmailVerification = false; return }
+
+        try? await user.reload()
+        needsEmailVerification = !user.isEmailVerified
+    }
+
+    /// Sends a 6-digit code — the same OTP endpoint the web uses.
+    func sendEmailVerificationCode() async throws {
+        _ = try await callAPI("password-otp/request", body: ["purpose": "EMAIL_VERIFY"])
+        verificationCodeSent = true
+    }
+
+    /// Confirms the code. On success the token is refreshed so Firestore rules
+    /// see `email_verified` on the very next write.
+    func confirmEmailVerificationCode(_ code: String) async throws {
+        _ = try await callAPI("verify-email", body: ["code": code])
+        if let user = Auth.auth().currentUser {
+            _ = try? await user.getIDTokenResult(forcingRefresh: true)
+            try? await user.reload()
+        }
+        needsEmailVerification = false
+        verificationCodeSent = false
+    }
+
+    struct APIError: LocalizedError {
+        let errorDescription: String?
+    }
+
+    @discardableResult
+    private func callAPI(_ path: String, body: [String: String]) async throws -> Data {
+        guard let user = Auth.auth().currentUser else {
+            throw APIError(errorDescription: "You're signed out. Sign in and try again.")
+        }
+        let idToken = try await user.getIDToken()
+        var request = URLRequest(url: URL(string: "https://viefolio.com/api/\(path)")!)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(idToken)", forHTTPHeaderField: "Authorization")
+        request.httpBody = try JSONEncoder().encode(body)
+        request.timeoutInterval = 15
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            let message = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["error"] as? String
+            throw APIError(errorDescription: message ?? "Something went wrong. Please try again.")
+        }
+        return data
     }
 
     // MARK: - Error Mapping
@@ -101,14 +165,20 @@ final class AuthenticationService {
                 try await FirestoreService.shared.claimUsernameAndCreateProfile(
                     username: username,
                     fullName: fullName,
-                    uid: result.user.uid
+                    uid: result.user.uid,
+                    emailVerified: false
                 )
             } catch {
-                await FirestoreService.shared.ensureProfile(uid: result.user.uid, displayName: fullName)
+                await FirestoreService.shared.ensureProfile(uid: result.user.uid, displayName: fullName, emailVerified: false)
                 errorMessage = "Your account was created, but that username was just taken. You can pick a new one on viefolio.com."
             }
 
             currentUser = result.user
+
+            // Google and Apple hand us an address their provider already
+            // verified; only password sign-ups get a code.
+            needsEmailVerification = true
+            try? await sendEmailVerificationCode()
         } catch {
             errorMessage = friendlyMessage(for: error)
             throw error

@@ -162,10 +162,10 @@ final class FirestoreService {
     }
 
     @MainActor
-    func setProjectImageUrl(_ url: String, projectId: String) async {
+    func setProjectImageUrls(_ urls: [String], projectId: String) async {
         do {
             try await db.collection("projects").document(projectId)
-                .updateData(["imageUrl": url])
+                .updateData(["imageUrl": urls.first ?? "", "imageUrls": urls])
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -262,15 +262,20 @@ final class FirestoreService {
 
     // MARK: - Registration & Username
 
-    func ensureProfile(uid: String, displayName: String?) async {
+    /// `emailVerified: false` marks a fresh password sign-up whose portfolio
+    /// stays unpublished until they click the link. Omit it for OAuth sign-ins —
+    /// an absent field means verified.
+    func ensureProfile(uid: String, displayName: String?, emailVerified: Bool? = nil) async {
         let ref = db.collection("profiles").document(uid)
         do {
             let snap = try await ref.getDocument()
             if !snap.exists {
-                try await ref.setData([
+                var data: [String: Any] = [
                     "fullName": displayName ?? "", "title": "", "bio": "",
                     "location": "", "username": "", "avatarUrl": "", "userId": uid,
-                ])
+                ]
+                if let emailVerified { data["emailVerified"] = emailVerified }
+                try await ref.setData(data)
             }
         } catch {
             print("❌ EnsureProfile error: \(error)")
@@ -322,7 +327,7 @@ final class FirestoreService {
         }
     }
 
-    func claimUsernameAndCreateProfile(username: String, fullName: String, uid: String) async throws {
+    func claimUsernameAndCreateProfile(username: String, fullName: String, uid: String, emailVerified: Bool? = nil) async throws {
         let legacy = try await db.collection("profiles")
             .whereField("username", isEqualTo: username)
             .getDocuments()
@@ -341,10 +346,12 @@ final class FirestoreService {
                     return nil
                 }
                 transaction.setData(["userId": uid], forDocument: usernameRef)
-                transaction.setData([
+                var data: [String: Any] = [
                     "fullName": fullName, "title": "", "bio": "", "location": "",
                     "username": username, "avatarUrl": "", "userId": uid,
-                ], forDocument: profileRef, merge: true)
+                ]
+                if let emailVerified { data["emailVerified"] = emailVerified }
+                transaction.setData(data, forDocument: profileRef, merge: true)
             } catch {
                 errorPointer?.pointee = error as NSError
             }

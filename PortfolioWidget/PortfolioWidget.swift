@@ -63,14 +63,14 @@ struct VisitsWidgetView: View {
             }
         }
         .containerBackground(for: .widget) {
-            Color(.systemBackground)
+            Color.wSurface
         }
     }
 
     private var emptyState: some View {
         VStack(spacing: 6) {
             Image(systemName: "chart.bar.fill")
-                .foregroundStyle(.indigo)
+                .foregroundStyle(.wBrand)
             Text("Open Viefolio to load your stats")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
@@ -87,7 +87,7 @@ struct VisitsWidgetView: View {
                     .font(.system(size: 10, weight: .bold))
                     .tracking(0.8)
             }
-            .foregroundStyle(.indigo)
+            .foregroundStyle(.wBrand)
 
             Spacer(minLength: 0)
 
@@ -114,7 +114,7 @@ struct VisitsWidgetView: View {
                         .font(.system(size: 10, weight: .bold))
                         .tracking(0.8)
                 }
-                .foregroundStyle(.indigo)
+                .foregroundStyle(.wBrand)
 
                 Spacer(minLength: 0)
 
@@ -135,8 +135,8 @@ struct VisitsWidgetView: View {
                     RoundedRectangle(cornerRadius: 2.5)
                         .fill(
                             count > 0
-                            ? AnyShapeStyle(LinearGradient(colors: [.indigo, .purple], startPoint: .top, endPoint: .bottom))
-                            : AnyShapeStyle(Color(.systemGray5))
+                            ? AnyShapeStyle(LinearGradient(colors: [.wBrand, .wButter], startPoint: .top, endPoint: .bottom))
+                            : AnyShapeStyle(Color.wSubtle)
                         )
                         .frame(width: 10, height: max(5, CGFloat(count) / CGFloat(peak) * 52))
                 }
@@ -164,4 +164,17 @@ struct PortfolioWidgetBundle: WidgetBundle {
     var body: some Widget {
         VisitsWidget()
     }
+}
+
+// MARK: - Viefolio palette (mirrors Portfolio/Models/Theme.swift)
+
+extension ShapeStyle where Self == Color {
+    static var wBrand: Color { Color(red: 0.004, green: 0.243, blue: 0.216) }   // #013e37
+    static var wButter: Color { Color(red: 1.0, green: 0.937, blue: 0.702) }    // #ffefb3
+    static var wSurface: Color { Color(uiColor: UIColor { $0.userInterfaceStyle == .dark
+        ? UIColor(red: 0.008, green: 0.184, blue: 0.165, alpha: 1)
+        : UIColor(red: 0.992, green: 0.984, blue: 0.953, alpha: 1) }) }         // #fdfbf3 / #012f2a
+    static var wSubtle: Color { Color(uiColor: UIColor { $0.userInterfaceStyle == .dark
+        ? UIColor(red: 0.039, green: 0.227, blue: 0.200, alpha: 1)
+        : UIColor(red: 0.945, green: 0.933, blue: 0.882, alpha: 1) }) }         // #f1eee1
 }

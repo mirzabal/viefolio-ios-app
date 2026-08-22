@@ -25,7 +25,7 @@ enum ProjectStatus: String, CaseIterable, Codable, Identifiable {
 
     var color: Color {
         switch self {
-        case .inProgress: return .indigo
+        case .inProgress: return .brand
         case .released:   return .green
         }
     }

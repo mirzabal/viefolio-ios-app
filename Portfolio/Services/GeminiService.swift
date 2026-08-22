@@ -49,7 +49,7 @@ final class GeminiService {
         let linkList = links.isEmpty ? "None" : links.map { "\($0.type): \($0.url)" }.joined(separator: ", ")
         
         let prompt = """
-        You are an experienced project mentor. Your audience is broad — developers, designers, creators, and students — so adapt the milestones to whatever kind of project this is (an app, a design, a research paper, a video, a business, etc.). Generate 5-8 realistic milestones/checkpoints.
+        You are an experienced project mentor. Your audience is broad — developers, designers, creators, and students — so adapt the milestones to whatever kind of project this is (an app, a design, a research paper, a video, a business, an engineering project etc.). Generate 5-8 realistic milestones/checkpoints.
 
         Project Title: \(title)
         Project Description: \(description)
@@ -57,7 +57,7 @@ final class GeminiService {
         Links: \(linkList)
 
         CRITICAL RULES:
-        - Each checkpoint is a short, readable title in Title Case (2-5 words), e.g. "Planning & Research", "First Draft", "Design System", "Launch"
+        - Each checkpoint is a short, readable title in Title Case (2-5 words)
         - Use plain spaces between words — never underscores, snake_case, or hyphens joining words
         - Order them logically from project start to finish
         - Assign a "percentage" to each checkpoint representing its share of overall project effort

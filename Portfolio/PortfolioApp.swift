@@ -1,5 +1,6 @@
 import SwiftUI
 import FirebaseCore
+import FirebaseAuth
 import GoogleSignIn
 
 @main
@@ -7,7 +8,6 @@ struct PortfolioApp: App {
     
     init() {
         FirebaseApp.configure()
-        print("🔥 Firebase EN BAŞTA, her şeyden önce başlatıldı!")
     }
     
     var body: some Scene {
@@ -27,12 +27,19 @@ struct RootView: View {
     var body: some View {
         Group {
             if authService.isAuthenticated {
-                ContentView()
+                if authService.needsEmailVerification {
+                    // Nothing in the app is reachable until the code is entered.
+                    EmailVerificationView(email: authService.currentUser?.email ?? "your email")
+                } else {
+                    ContentView()
+                }
             } else {
                 AuthenticationView()
             }
         }
-        .environment(authService) 
+        .environment(authService)
         .animation(.easeInOut(duration: 0.3), value: authService.isAuthenticated)
+        .animation(.easeInOut(duration: 0.3), value: authService.needsEmailVerification)
+        .task { await authService.refreshEmailVerification() }
     }
 }

@@ -179,6 +179,7 @@ private var firestoreEndpoint: String {
                     Text("VieFolio requires this structured JSON body to securely filter and return only your published projects.")
                 }
             }
+            .viefolioBackground()
             .navigationTitle("API Access")
     }
     

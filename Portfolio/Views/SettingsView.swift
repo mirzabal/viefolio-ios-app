@@ -21,7 +21,7 @@ struct SettingsView: View {
                     HStack(spacing: 12) {
                         Image(systemName: "person.crop.circle.fill")
                             .font(.system(size: 36))
-                            .foregroundStyle(.indigo)
+                            .foregroundStyle(.brand)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(authService.currentUser?.displayName
                                  ?? firestoreService.profile?.fullName
@@ -61,7 +61,7 @@ struct SettingsView: View {
                                 .foregroundStyle(.secondary)
                         } icon: {
                             Image(systemName: "info.circle")
-                                .foregroundStyle(.indigo)
+                                .foregroundStyle(.brand)
                         }
                     }
                 }
@@ -110,6 +110,7 @@ struct SettingsView: View {
                     Text("Permanently deletes your portfolio, projects, images and login. Requires a code sent to your email.")
                 }
             }
+            .viefolioBackground()
             .navigationTitle("Settings")
             .refreshable { await firestoreService.refresh() }
             .sheet(isPresented: $showChangePassword) {
@@ -188,6 +189,7 @@ struct ChangePasswordView: View {
                     }
                 }
             }
+            .viefolioBackground()
             .navigationTitle("Change Password")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -341,6 +343,7 @@ struct DeleteAccountView: View {
                     }
                 }
             }
+            .viefolioBackground()
             .navigationTitle("Delete Account")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

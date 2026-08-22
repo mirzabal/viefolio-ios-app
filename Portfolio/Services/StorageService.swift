@@ -15,8 +15,10 @@ final class StorageService {
         try await upload(data, path: "profiles/\(userUid)/avatar")
     }
 
+    /// One object per image — a fixed per-project path would make a second
+    /// upload overwrite the first.
     func uploadProjectImage(_ data: Data, userUid: String, projectId: String) async throws -> String {
-        try await upload(data, path: "project-images/\(userUid)/\(projectId)")
+        try await upload(data, path: "project-images/\(userUid)/\(projectId)/\(UUID().uuidString)")
     }
 
     private func upload(_ data: Data, path: String) async throws -> String {

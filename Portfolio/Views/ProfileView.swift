@@ -45,6 +45,7 @@ struct ProfileView: View {
                 socialLinksSection
                 visibilitySection
             }
+            .viefolioBackground()
             .navigationTitle("Profile")
             .refreshable { await firestoreService.refresh() }
             .toolbar {
@@ -197,7 +198,7 @@ struct ProfileView: View {
             AsyncImage(url: url) { image in
                 image.resizable().aspectRatio(contentMode: .fill)
             } placeholder: {
-                Circle().fill(Color(.systemGray5))
+                Circle().fill(Color.subtle)
             }
             .frame(width: 72, height: 72)
             .clipShape(Circle())
@@ -205,7 +206,7 @@ struct ProfileView: View {
             Image(systemName: "person.crop.circle.fill")
                 .resizable()
                 .frame(width: 72, height: 72)
-                .foregroundStyle(Color(.systemGray4))
+                .foregroundStyle(Color.hairline)
         }
     }
 
@@ -234,12 +235,12 @@ struct ProfileView: View {
                         Spacer()
                         Text("\(skill.level)")
                             .font(.caption.weight(.bold).monospacedDigit())
-                            .foregroundStyle(.indigo)
+                            .foregroundStyle(.brand)
                         Button {
                             skill.visible.toggle()
                         } label: {
                             Image(systemName: skill.visible ? "eye.fill" : "eye.slash")
-                                .foregroundStyle(skill.visible ? .indigo : .secondary)
+                                .foregroundStyle(skill.visible ? .brand : .secondary)
                         }
                         .buttonStyle(.plain)
                     }
@@ -247,7 +248,7 @@ struct ProfileView: View {
                         get: { Double(skill.level) },
                         set: { skill.level = Int($0) }
                     ), in: 1...100, step: 1)
-                    .tint(.indigo)
+                    .tint(.brand)
                 }
                 .padding(.vertical, 2)
             }
@@ -277,7 +278,7 @@ struct ProfileView: View {
                             link.visible.toggle()
                         } label: {
                             Image(systemName: link.visible ? "eye.fill" : "eye.slash")
-                                .foregroundStyle(link.visible ? .indigo : .secondary)
+                                .foregroundStyle(link.visible ? .brand : .secondary)
                         }
                         .buttonStyle(.plain)
                     }

@@ -36,7 +36,10 @@ struct Project: Identifiable, Hashable {
     var title: String = ""
     var description: String = ""
     var status: ProjectStatus = .inProgress
+    /// Cover image. Mirrors `imageUrls.first` — kept so older clients and the
+    /// web's card rendering keep working.
     var imageUrl: String = ""
+    var imageUrls: [String] = []
     var showImage: Bool = false
     var icon: ProjectIcon = .code
     var projectType: ProjectType = .solo
@@ -80,6 +83,7 @@ extension Project {
         self.description = data["description"] as? String ?? ""
         self.status = ProjectStatus(from: data["status"] as? String ?? "IN_PROGRESS")
         self.imageUrl = (data["imageUrl"] as? String) ?? (data["coverImageUrl"] as? String) ?? ""
+        self.imageUrls = (data["imageUrls"] as? [String]) ?? (self.imageUrl.isEmpty ? [] : [self.imageUrl])
         self.showImage = data["showImage"] as? Bool ?? false
         self.icon = ProjectIcon(from: data["icon"] as? String ?? "Code")
         self.projectType = ProjectType(from: data["projectType"] as? String ?? "SOLO")
@@ -120,7 +124,8 @@ extension Project {
             "title": title,
             "description": description,
             "status": status.rawValue,
-            "imageUrl": imageUrl,
+            "imageUrl": imageUrls.first ?? imageUrl,
+            "imageUrls": imageUrls,
             "showImage": showImage,
             "icon": icon.rawValue,
             "projectType": projectType.rawValue,
