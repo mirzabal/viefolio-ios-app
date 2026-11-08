@@ -17,7 +17,7 @@ struct SettingsView: View {
         NavigationStack {
             List {
                 // MARK: Account
-                Section("Account") {
+                Section {
                     HStack(spacing: 12) {
                         Image(systemName: "person.crop.circle.fill")
                             .font(.system(size: 36))
@@ -33,10 +33,14 @@ struct SettingsView: View {
                         }
                     }
                     .padding(.vertical, 4)
+                } header: {
+                    Text("Account")
+                        .foregroundStyle(Color.headerInk)
                 }
+                .listRowBackground(Color.surface)
 
                 // MARK: Portfolio
-                Section("Portfolio") {
+                Section {
                     if !username.isEmpty, let url = URL(string: "https://\(username).viefolio.com") {
                         Link(destination: url) {
                             HStack {
@@ -64,28 +68,40 @@ struct SettingsView: View {
                                 .foregroundStyle(.brand)
                         }
                     }
+                } header: {
+                    Text("Portfolio")
+                        .foregroundStyle(Color.headerInk)
                 }
+                .listRowBackground(Color.surface)
 
                 // MARK: Security
                 if authService.isPasswordUser {
-                    Section("Security") {
+                    Section {
                         Button {
                             showChangePassword = true
                         } label: {
                             Label("Change Password", systemImage: "key.fill")
                                 .foregroundStyle(.primary)
                         }
+                    } header: {
+                        Text("Security")
+                            .foregroundStyle(Color.headerInk)
                     }
+                    .listRowBackground(Color.surface)
                 }
 
                 // MARK: Developer
-                Section("Developer") {
+                Section {
                     NavigationLink {
                         APISettingsView()
                     } label: {
                         Label("API Access", systemImage: "server.rack")
                     }
+                } header: {
+                    Text("Developer")
+                        .foregroundStyle(Color.headerInk)
                 }
+                .listRowBackground(Color.surface)
 
                 // MARK: Session
                 Section {
@@ -97,6 +113,7 @@ struct SettingsView: View {
                             .foregroundStyle(.red)
                     }
                 }
+                .listRowBackground(Color.surface)
                 
                 // MARK: Danger Zone
                 Section {
@@ -109,6 +126,7 @@ struct SettingsView: View {
                 } footer: {
                     Text("Permanently deletes your portfolio, projects, images and login. Requires a code sent to your email.")
                 }
+                .listRowBackground(Color.surface)
             }
             .viefolioBackground()
             .navigationTitle("Settings")
@@ -157,13 +175,16 @@ struct ChangePasswordView: View {
                         Text("Passwords don't match.").foregroundStyle(.red)
                     }
                 }
+                .listRowBackground(Color.surface)
 
                 Section {
                     Toggle("Sign out of all other devices", isOn: $signOutOtherDevices)
+                        .toggleStyle(.viefolio)
                 }
+                .listRowBackground(Color.surface)
 
                 if codeSent {
-                    Section("Verification code") {
+                    Section {
                         TextField("6-digit code", text: $code)
                             .keyboardType(.numberPad)
                             .textContentType(.oneTimeCode)
@@ -178,7 +199,11 @@ struct ChangePasswordView: View {
                             message = nil
                         }
                         .font(.caption)
+                    } header: {
+                        Text("Verification code")
+                            .foregroundStyle(Color.headerInk)
                     }
+                    .listRowBackground(Color.surface)
                 }
 
                 if let message {
@@ -187,6 +212,7 @@ struct ChangePasswordView: View {
                             .font(.caption)
                             .foregroundStyle(isError ? .red : .green)
                     }
+                    .listRowBackground(Color.surface)
                 }
             }
             .viefolioBackground()
@@ -303,15 +329,20 @@ struct DeleteAccountView: View {
                         .font(.subheadline)
                         .foregroundStyle(.red)
                 }
+                .listRowBackground(Color.surface)
 
-                Section("Type \"\(confirmPhrase)\" to continue") {
+                Section {
                     TextField(confirmPhrase, text: $confirmText)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
+                } header: {
+                    Text("Type \"\(confirmPhrase)\" to continue")
+                        .foregroundStyle(Color.headerInk)
                 }
+                .listRowBackground(Color.surface)
 
                 if codeSent {
-                    Section("Verification code") {
+                    Section {
                         TextField("6-digit code from your email", text: $code)
                             .keyboardType(.numberPad)
                             .textContentType(.oneTimeCode)
@@ -320,13 +351,18 @@ struct DeleteAccountView: View {
                             .onChange(of: code) { _, v in
                                 code = String(v.filter(\.isNumber).prefix(6))
                             }
+                    } header: {
+                        Text("Verification code")
+                            .foregroundStyle(Color.headerInk)
                     }
+                    .listRowBackground(Color.surface)
                 }
 
                 if let message {
                     Section {
                         Text(message).font(.caption).foregroundStyle(.red)
                     }
+                    .listRowBackground(Color.surface)
                 }
 
                 Section {
@@ -342,6 +378,7 @@ struct DeleteAccountView: View {
                         .disabled(code.count != 6 || isWorking)
                     }
                 }
+                .listRowBackground(Color.surface)
             }
             .viefolioBackground()
             .navigationTitle("Delete Account")

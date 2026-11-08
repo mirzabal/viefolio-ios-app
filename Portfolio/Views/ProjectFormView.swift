@@ -107,6 +107,7 @@ struct ProjectFormView: View {
                             .font(.caption)
                             .foregroundStyle(.red)
                     }
+                    .listRowBackground(Color.surface)
                 }
                 basicsSection
                 typeAndIconSection
@@ -139,7 +140,7 @@ struct ProjectFormView: View {
     // MARK: Sections
 
     private var basicsSection: some View {
-        Section("Project") {
+        Section {
             TextField("Title", text: $project.title)
             TextField("Description", text: $project.description, axis: .vertical)
                 .lineLimit(3...6)
@@ -149,7 +150,11 @@ struct ProjectFormView: View {
                 }
             }
             .pickerStyle(.segmented)
+        } header: {
+            Text("Project")
+                .foregroundStyle(Color.headerInk)
         }
+        .listRowBackground(Color.surface)
     }
 
     private var typeAndIconSection: some View {
@@ -185,14 +190,18 @@ struct ProjectFormView: View {
             }
         } header: {
             Text("Type & Icon")
+                .foregroundStyle(Color.headerInk)
         }
+        .listRowBackground(Color.surface)
     }
 
     private var datesSection: some View {
-        Section("Date Range") {
+        Section {
             Toggle("Start Date", isOn: $hasStartDate.animation())
+                .toggleStyle(.viefolio)
             if hasStartDate {
                 DatePicker("Starts", selection: $startDate, displayedComponents: .date)
+                    .tint(.brandFill)
             }
             Picker("End Date", selection: $endDateMode.animation()) {
                 ForEach(EndDateMode.allCases, id: \.self) { mode in
@@ -202,13 +211,19 @@ struct ProjectFormView: View {
             .pickerStyle(.segmented)
             if endDateMode == .date {
                 DatePicker("Ends", selection: $endDate, displayedComponents: .date)
+                    .tint(.brandFill)
             }
+        } header: {
+            Text("Date Range")
+                .foregroundStyle(Color.headerInk)
         }
+        .listRowBackground(Color.surface)
     }
 
     private var imageSection: some View {
-        Section("Images") {
+        Section {
             Toggle("Show image on portfolio", isOn: $project.showImage)
+                .toggleStyle(.viefolio)
 
             if !project.imageUrls.isEmpty || !pickedImageData.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -250,7 +265,11 @@ struct ProjectFormView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+        } header: {
+            Text("Images")
+                .foregroundStyle(Color.headerInk)
         }
+        .listRowBackground(Color.surface)
     }
 
     @ViewBuilder
@@ -299,7 +318,7 @@ struct ProjectFormView: View {
     }
 
     private var linksSection: some View {
-        Section("Links") {
+        Section {
             ForEach($project.links) { $link in
                 HStack {
                     Picker("", selection: $link.type) {
@@ -322,11 +341,15 @@ struct ProjectFormView: View {
             } label: {
                 Label("Add Link", systemImage: "plus.circle.fill")
             }
+        } header: {
+            Text("Links")
+                .foregroundStyle(Color.headerInk)
         }
+        .listRowBackground(Color.surface)
     }
 
     private var techStackSection: some View {
-        Section("Tech Stack") {
+        Section {
             if !project.techStack.isEmpty {
                 FlowChips(items: project.techStack.map(\.technologyName))
             }
@@ -345,7 +368,11 @@ struct ProjectFormView: View {
                 }
                 .font(.caption)
             }
+        } header: {
+            Text("Tech Stack")
+                .foregroundStyle(Color.headerInk)
         }
+        .listRowBackground(Color.surface)
     }
 
     private var checkpointsSection: some View {
@@ -416,6 +443,7 @@ struct ProjectFormView: View {
         } header: {
             HStack {
                 Text("Checkpoints")
+                    .foregroundStyle(Color.headerInk)
                 Spacer()
                 if !project.checkpoints.isEmpty {
                     Text("Total: \(totalPercentage)%")
@@ -427,6 +455,7 @@ struct ProjectFormView: View {
                 Text("Percentages should add up to 100 so the progress bar is accurate.")
             }
         }
+        .listRowBackground(Color.surface)
     }
 
     private var totalPercentage: Int {

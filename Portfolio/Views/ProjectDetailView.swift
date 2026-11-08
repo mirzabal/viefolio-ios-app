@@ -62,6 +62,7 @@ struct ProjectDetailView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            .listRowBackground(Color.surface)
 
             // MARK: Images
             if project.showImage, !project.imageUrls.isEmpty {
@@ -82,6 +83,7 @@ struct ProjectDetailView: View {
                         }
                     }
                 }
+                .listRowBackground(Color.surface)
             }
 
             // MARK: Checkpoints
@@ -110,6 +112,7 @@ struct ProjectDetailView: View {
                 } header: {
                     HStack {
                         Text("Checkpoints")
+                            .foregroundStyle(Color.headerInk)
                         Spacer()
                         Text("\(project.progress)% complete")
                             .foregroundStyle(project.status.color)
@@ -119,11 +122,12 @@ struct ProjectDetailView: View {
                         .tint(project.status.color)
                         .padding(.top, 4)
                 }
+                .listRowBackground(Color.surface)
             }
 
             // MARK: Links
             if !project.links.isEmpty {
-                Section("Links") {
+                Section {
                     ForEach(project.links) { link in
                         if let url = link.destinationURL {
                             Link(destination: url) {
@@ -141,14 +145,22 @@ struct ProjectDetailView: View {
                             .foregroundStyle(.primary)
                         }
                     }
+                } header: {
+                    Text("Links")
+                        .foregroundStyle(Color.headerInk)
                 }
+                .listRowBackground(Color.surface)
             }
 
             // MARK: Tech Stack
             if !project.techStack.isEmpty {
-                Section("Tech Stack") {
+                Section {
                     FlowChips(items: project.techStack.map(\.technologyName))
+                } header: {
+                    Text("Tech Stack")
+                        .foregroundStyle(Color.headerInk)
                 }
+                .listRowBackground(Color.surface)
             }
         }
         .viefolioBackground()

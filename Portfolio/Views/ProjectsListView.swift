@@ -23,6 +23,7 @@ struct ProjectsListView: View {
                     projectsList
                 }
             }
+            .background(Color.canvas)
             .navigationTitle("Projects")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -67,6 +68,7 @@ struct ProjectsListView: View {
                 NavigationLink(value: project.id) {
                     ProjectRowView(project: project)
                 }
+                .listRowBackground(Color.surface)
                 .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                     Button(role: .destructive) {
                         projectToDelete = project
@@ -79,7 +81,7 @@ struct ProjectsListView: View {
                         Label(project.visible ? "Hide" : "Show",
                               systemImage: project.visible ? "eye.slash" : "eye")
                     }
-                    .tint(.brand)
+                    .tint(.brandFill)
                 }
             }
             .onMove { source, destination in
@@ -106,7 +108,7 @@ struct ProjectsListView: View {
                 showCreateSheet = true
             }
             .buttonStyle(.borderedProminent)
-            .tint(.brand)
+            .tint(.brandFill)
         }
     }
 
@@ -123,7 +125,7 @@ struct ProjectsListView: View {
                 }
             }
             .buttonStyle(.borderedProminent)
-            .tint(.brand)
+            .tint(.brandFill)
         }
     }
 }

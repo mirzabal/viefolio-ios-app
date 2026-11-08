@@ -37,6 +37,7 @@ struct ProfileView: View {
                             .font(.caption)
                             .foregroundStyle(.red)
                     }
+                    .listRowBackground(Color.surface)
                 }
                 avatarSection
                 usernameSection
@@ -93,8 +94,15 @@ struct ProfileView: View {
                                 .font(.subheadline.weight(.semibold))
                         }
                     }
-                    Toggle("Show avatar", isOn: $profile.showAvatar)
-                        .font(.subheadline)
+                    Button {
+                        profile.showAvatar.toggle()
+                    } label: {
+                        Label(profile.showAvatar ? "Photo visible on portfolio" : "Photo hidden on portfolio",
+                              systemImage: profile.showAvatar ? "eye.fill" : "eye.slash")
+                            .font(.caption)
+                            .foregroundStyle(profile.showAvatar ? .brand : .secondary)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             .padding(.vertical, 4)
@@ -102,6 +110,7 @@ struct ProfileView: View {
                 Task { await uploadAvatar(newItem) }
             }
         }
+        .listRowBackground(Color.surface)
     }
 
     private var usernameSection: some View {
@@ -134,9 +143,11 @@ struct ProfileView: View {
             }
         } header: {
             Text("Username")
+                .foregroundStyle(Color.headerInk)
         } footer: {
             Text(usernameDraft.isEmpty ? "yourname.viefolio.com" : "\(usernameDraft).viefolio.com")
         }
+        .listRowBackground(Color.surface)
     }
 
     @ViewBuilder
@@ -211,7 +222,7 @@ struct ProfileView: View {
     }
 
     private var aboutSection: some View {
-        Section("About") {
+        Section {
             TextField("Full Name", text: $profile.fullName)
             TextField("Title (e.g. iOS Developer)", text: $profile.title)
             TextField("Bio", text: $profile.bio, axis: .vertical)
@@ -223,11 +234,15 @@ struct ProfileView: View {
                     Text(type.displayName).tag(AccountType?.some(type))
                 }
             }
+        } header: {
+            Text("About")
+                .foregroundStyle(Color.headerInk)
         }
+        .listRowBackground(Color.surface)
     }
 
     private var skillsSection: some View {
-        Section("Skills") {
+        Section {
             ForEach($profile.skills) { $skill in
                 VStack(spacing: 6) {
                     HStack {
@@ -259,11 +274,15 @@ struct ProfileView: View {
             } label: {
                 Label("Add Skill", systemImage: "plus.circle.fill")
             }
+        } header: {
+            Text("Skills")
+                .foregroundStyle(Color.headerInk)
         }
+        .listRowBackground(Color.surface)
     }
 
     private var socialLinksSection: some View {
-        Section("Social Links") {
+        Section {
             ForEach($profile.socialLinks) { $link in
                 VStack(spacing: 6) {
                     HStack {
@@ -299,19 +318,28 @@ struct ProfileView: View {
             } label: {
                 Label("Add Link", systemImage: "plus.circle.fill")
             }
+        } header: {
+            Text("Social Links")
+                .foregroundStyle(Color.headerInk)
         }
+        .listRowBackground(Color.surface)
     }
 
     private var visibilitySection: some View {
         Section {
             Toggle("Show links", isOn: $profile.showLinks)
+                .toggleStyle(.viefolio)
             Toggle("Show projects", isOn: $profile.showProjects)
+                .toggleStyle(.viefolio)
             Toggle("Show skills", isOn: $profile.showSkills)
+                .toggleStyle(.viefolio)
         } header: {
             Text("Portfolio Sections")
+                .foregroundStyle(Color.headerInk)
         } footer: {
             Text("Hidden sections disappear from your public portfolio immediately.")
         }
+        .listRowBackground(Color.surface)
     }
 
     // MARK: Actions

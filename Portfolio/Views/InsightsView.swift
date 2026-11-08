@@ -74,7 +74,7 @@ struct InsightsView: View {
     // MARK: Chart
 
     private var chartSection: some View {
-        Section("Visits · last 7 days") {
+        Section {
             Chart(stats.series(days: 7), id: \.date) { item in
                 BarMark(
                     x: .value("Day", item.date, unit: .day),
@@ -98,7 +98,11 @@ struct InsightsView: View {
             }
             .frame(height: 160)
             .padding(.vertical, 8)
+        } header: {
+            Text("Visits · last 7 days")
+                .foregroundStyle(Color.headerInk)
         }
+        .listRowBackground(Color.surface)
     }
 
     // MARK: Devices
@@ -156,9 +160,11 @@ struct InsightsView: View {
             }
         } header: {
             Text("Signed-in devices")
+                .foregroundStyle(Color.headerInk)
         } footer: {
             Text("Devices where your Viefolio account was opened, with last sign-in time and approximate location.")
         }
+        .listRowBackground(Color.surface)
     }
 }
 

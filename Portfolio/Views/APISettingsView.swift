@@ -101,18 +101,22 @@ private var firestoreEndpoint: String {
                     copyableRow(label: "User UID", value: userUid, fieldId: "uid")
                 } header: {
                     Label("Your Identifier", systemImage: "key.fill")
+                        .foregroundStyle(Color.headerInk)
                 } footer: {
                     Text("This is your unique identifier. External apps use this UID to fetch your portfolio data.")
                 }
+                .listRowBackground(Color.surface)
                 
                 // MARK: API Endpoint
                 Section {
                     copyableRow(label: "REST Endpoint", value: firestoreEndpoint, fieldId: "endpoint")
                 } header: {
                     Label("VieFolio API Endpoint", systemImage: "server.rack")
+                        .foregroundStyle(Color.headerInk)
                 } footer: {
                     Text("Use this official VieFolio endpoint to seamlessly fetch your dynamic portfolio data into any web project.")
                 }
+                .listRowBackground(Color.surface)
                 
                 // MARK: cURL Example
                 Section {
@@ -133,7 +137,9 @@ private var firestoreEndpoint: String {
                     .padding(.vertical, 4)
                 } header: {
                     Label("Example: cURL", systemImage: "terminal")
+                        .foregroundStyle(Color.headerInk)
                 }
+                .listRowBackground(Color.surface)
                 
                 // MARK: JavaScript Example
                 Section {
@@ -154,7 +160,9 @@ private var firestoreEndpoint: String {
                     .padding(.vertical, 4)
                 } header: {
                     Label("Example: JavaScript", systemImage: "curlybraces")
+                        .foregroundStyle(Color.headerInk)
                 }
+                .listRowBackground(Color.surface)
                 
                 // MARK: Query Body
                 Section {
@@ -175,9 +183,11 @@ private var firestoreEndpoint: String {
                     .padding(.vertical, 4)
                 } header: {
                     Label("Query Payload", systemImage: "doc.text")
+                        .foregroundStyle(Color.headerInk)
                 } footer: {
                     Text("VieFolio requires this structured JSON body to securely filter and return only your published projects.")
                 }
+                .listRowBackground(Color.surface)
             }
             .viefolioBackground()
             .navigationTitle("API Access")

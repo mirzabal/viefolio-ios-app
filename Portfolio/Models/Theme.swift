@@ -5,8 +5,15 @@ import UIKit
 // #013e37 brand · #fdfbf3 cream · #ffefb3 butter
 
 extension ShapeStyle where Self == Color {
-    /// #013e37 — primary brand green.
-    static var brand: Color { Color(hex: 0x013E37) }
+    /// #013e37 — primary brand green; cream in dark so text/icons stay readable on `canvas`.
+    static var brand: Color { Color(light: 0x013E37, dark: 0xFDFBF3) }
+    /// Filled controls with white content (prominent buttons, toggles, swipe actions).
+    static var brandFill: Color { Color(light: 0x013E37, dark: 0x2E7D6F) }
+    /// Section headers: system gray in light, cream in dark.
+    static var headerInk: Color { Color(uiColor: UIColor { $0.userInterfaceStyle == .dark
+        ? UIColor(Color(hex: 0xFDFBF3)) : .secondaryLabel }) }
+    /// Text/spinners drawn on top of a `brand` fill.
+    static var onBrand: Color { Color(light: 0xFFFFFF, dark: 0x013E37) }
     /// #ffefb3 — warm highlight.
     static var butter: Color { Color(hex: 0xFFEFB3) }
     /// Mid-tone green for text and gradients where #013e37 is too heavy.
@@ -43,4 +50,35 @@ extension View {
     func viefolioBackground() -> some View {
         scrollContentBackground(.hidden).background(Color.canvas)
     }
+}
+
+/// System switch in light; in dark a butter/dark-green switch (the stock white knob vanishes on butter).
+struct ViefolioToggleStyle: ToggleStyle {
+    @Environment(\.colorScheme) private var colorScheme
+
+    func makeBody(configuration: Configuration) -> some View {
+        if colorScheme == .dark {
+            HStack {
+                configuration.label
+                Spacer()
+                Capsule()
+                    .fill(configuration.isOn ? Color.butter : Color.hairline)
+                    .frame(width: 51, height: 31)
+                    .overlay(alignment: configuration.isOn ? .trailing : .leading) {
+                        Circle()
+                            .fill(configuration.isOn ? Color(hex: 0x013E37) : Color.brand)
+                            .padding(2)
+                    }
+            }
+            .contentShape(Rectangle())
+            .onTapGesture { withAnimation(.snappy(duration: 0.2)) { configuration.isOn.toggle() } }
+            .accessibilityRepresentation { Toggle(isOn: configuration.$isOn) { configuration.label } }
+        } else {
+            Toggle(configuration).toggleStyle(.switch)
+        }
+    }
+}
+
+extension ToggleStyle where Self == ViefolioToggleStyle {
+    static var viefolio: ViefolioToggleStyle { ViefolioToggleStyle() }
 }

@@ -1,6 +1,8 @@
 # Secrets — never commit
 Portfolio/Secrets.plist
 Portfolio/GoogleService-Info.plist
+.claude/
+firebase.json
 
 # Xcode
 xcuserdata/

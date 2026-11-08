@@ -250,7 +250,7 @@ struct AuthenticationView: View {
         } label: {
             HStack(spacing: 10) {
                 if authService.isLoading {
-                    ProgressView().tint(.white)
+                    ProgressView().tint(Color.onBrand)
                 }
                 Text(isRegistering ? "Create Account" : "Sign In")
                     .font(.subheadline.weight(.semibold))
@@ -258,7 +258,7 @@ struct AuthenticationView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 15)
             .background(brandGradient, in: RoundedRectangle(cornerRadius: 12))
-            .foregroundStyle(.white)
+            .foregroundStyle(Color.onBrand)
             .opacity(canSubmit ? 1 : 0.5)
         }
         .disabled(!canSubmit)

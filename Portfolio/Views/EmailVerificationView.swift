@@ -60,7 +60,7 @@ struct EmailVerificationView: View {
                     .frame(height: 50)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(.brand)
+                .tint(.brandFill)
                 .disabled(busy || code.count != 6)
 
                 Button("Didn't get it? Resend") {
